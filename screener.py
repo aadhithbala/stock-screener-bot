@@ -61,13 +61,7 @@ def send_discord_embed(df):
         
         # Direct link to TradingView
         link = f"https://in.tradingview.com/chart/?symbol=NSE:{symbol}"
-        
-        # Emoji based on performance
-        
-        
-        # Field Value (The details)
-        # We use specific formatting to make it look clean
-        details = f"**Price:** ₹{price:,.2f}\n**Vol:** {volume} | **RSI:** {row.get('rsi', 'N/A')}"
+    
         
         fields.append({
             "name": f"{symbol} (+{change}%)", 
