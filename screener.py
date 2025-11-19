@@ -82,8 +82,7 @@ def send_discord_embed(df):
 
     # 3. Send Payload
     payload = {
-        "username": "Harshad Mehta",
-        "avatar_url": "https://i.ibb.co/vv10B63z/Generated-Image-November-19-2025-3-14-PM-1.png",
+        "username": "Anand Srinivas",
         "embeds": [embed]
     }
     
