@@ -1,44 +1,100 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-import time
+import datetime
 
 # --- CONFIGURATION ---
 WEBHOOK_URL = "https://discord.com/api/webhooks/1440621223846613074/eDyk7fXWLHk-aumUz3dQYUG9cmX_AwqMdF1PK6WyxfH3PjK4n0fjaqoZlJvs815GRKQS"
-
-# PASTE YOUR COPIED SCAN_CLAUSE INSIDE THE QUOTES BELOW
 SCAN_CLAUSE = '( {cash} ( ( {cash} ( latest close > latest sma( close,200 ) and latest rsi( 14 ) > 50 and latest volume > latest sma( volume,20 ) * 1.5 ) ) ) )'
 
+def format_volume(num):
+    """Helper to make volume readable (e.g., 1.2M, 500K)"""
+    num = float(num)
+    if num >= 1_000_000:
+        return f"{num/1_000_000:.2f}M"
+    elif num >= 1_000:
+        return f"{num/1_000:.2f}K"
+    return str(int(num))
+
 def get_stocks():
-    with requests.Session() as s:
-        # 1. Get the security token (CSRF) so Chartink thinks we are a real browser
-        r = s.get("https://chartink.com/screener/short-term-breakouts")
-        soup = BeautifulSoup(r.content, "lxml")
-        csrf = soup.find('meta', {'name': 'csrf-token'})['content']
+    try:
+        with requests.Session() as s:
+            # 1. Get CSRF Token
+            r = s.get("https://chartink.com/screener/short-term-breakouts")
+            soup = BeautifulSoup(r.content, "lxml")
+            csrf = soup.find('meta', {'name': 'csrf-token'})['content']
 
-        # 2. Ask Chartink for the data
-        r = s.post("https://chartink.com/screener/process", 
-                   headers={"x-csrf-token": csrf}, 
-                   data={"scan_clause": SCAN_CLAUSE})
-        
-        return pd.DataFrame(r.json()['data'])
+            # 2. Fetch Data
+            r = s.post("https://chartink.com/screener/process", 
+                       headers={"x-csrf-token": csrf}, 
+                       data={"scan_clause": SCAN_CLAUSE})
+            
+            data = r.json().get('data', [])
+            return pd.DataFrame(data)
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        return pd.DataFrame()
 
-def send_alert(df):
-    if df.empty: return
+def send_discord_embed(df):
+    if df.empty:
+        print("No stocks found.")
+        return
     
-    # Just take top 5 stocks to avoid spamming
+    # Sort by Change % and take top 10
     top_stocks = df.sort_values(by='per_chg', ascending=False).head(10)
     
-    msg = "**🔔 Market Open Alerts**\n"
+    # --- CONSTRUCT THE EMBED ---
+    
+    # 1. Create the Fields List
+    fields = []
     for _, row in top_stocks.iterrows():
-        link = f"https://in.tradingview.com/chart/?symbol=NSE:{row['nsecode']}"
-        msg += f"**{row['nsecode']}** (+{row['per_chg']}%) -> [Chart](<{link}>)\n"
+        symbol = row['nsecode']
+        price = float(row['close'])
+        change = float(row['per_chg'])
+        volume = format_volume(row['volume'])
         
-    requests.post(WEBHOOK_URL, json={"content": msg})
+        # Direct link to TradingView
+        link = f"https://in.tradingview.com/chart/?symbol=NSE:{symbol}"
+        
+        # Emoji based on performance
+        
+        
+        # Field Value (The details)
+        # We use specific formatting to make it look clean
+        details = f"**Price:** ₹{price:,.2f}\n**Vol:** {volume} | **RSI:** {row.get('rsi', 'N/A')}"
+        
+        fields.append({
+            "name": f"{symbol} (+{change}%)", 
+            "value": f"[View Chart]({link})\n{details}",
+            # "inline": True  # This makes them stack side-by-side (2 per row usually)
+        })
+
+    # 2. Build the Main Embed Object
+    embed = {
+        "title": "Short Term Breakouts",
+        "url": "https://chartink.com/screener",
+        "color": 5763719,  # Decimal color code for Green (Hex #57F287)
+        "fields": fields,
+        "footer": {
+            "text": f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        }
+    }
+
+    # 3. Send Payload
+    payload = {
+        "username": "Harshad Mehta",
+        "avatar_url": "https://i.ibb.co/vv10B63z/Generated-Image-November-19-2025-3-14-PM-1.png",
+        "embeds": [embed]
+    }
+    
+    response = requests.post(WEBHOOK_URL, json=payload)
+    
+    if response.status_code == 204:
+        print("✅ Discord Embed sent successfully!")
+    else:
+        print(f"❌ Failed to send: {response.status_code} - {response.text}")
 
 if __name__ == "__main__":
-    try:
-        df = get_stocks()
-        send_alert(df)
-    except Exception as e:
-        print(f"Failed: {e}")
+    print("Analyzing Market...")
+    df = get_stocks()
+    send_discord_embed(df)
