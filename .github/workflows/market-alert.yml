@@ -1,0 +1,35 @@
+name: Market Alerts (scheduled)
+
+on:
+  workflow_dispatch: {} #Manual trigger
+  schedule:
+    - cron: "30 3 * * 1-5"
+    - cron: "0 10 * * 1-5"
+
+jobs:
+  run-alert:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: market-alert
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+        # If you don't have requirements.txt, remove pip install line.
+
+      - name: Run market alert script
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          python screener.py
