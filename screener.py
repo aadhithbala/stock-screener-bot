@@ -4,7 +4,7 @@ import pandas as pd
 import time
 
 # --- CONFIGURATION ---
-WEBHOOK_URL = ""
+WEBHOOK_URL = "https://discord.com/api/webhooks/1440621223846613074/eDyk7fXWLHk-aumUz3dQYUG9cmX_AwqMdF1PK6WyxfH3PjK4n0fjaqoZlJvs815GRKQS"
 
 # PASTE YOUR COPIED SCAN_CLAUSE INSIDE THE QUOTES BELOW
 SCAN_CLAUSE = '( {cash} ( ( {cash} ( latest close > latest sma( close,200 ) and latest rsi( 14 ) > 50 and latest volume > latest sma( volume,20 ) * 1.5 ) ) ) )'
@@ -27,7 +27,7 @@ def send_alert(df):
     if df.empty: return
     
     # Just take top 5 stocks to avoid spamming
-    top_stocks = df.sort_values(by='per_chg', ascending=False).head(5)
+    top_stocks = df.sort_values(by='per_chg', ascending=False).head(15)
     
     msg = "**🔔 Market Open Alerts**\n"
     for _, row in top_stocks.iterrows():
