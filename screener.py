@@ -27,7 +27,7 @@ def send_alert(df):
     if df.empty: return
     
     # Just take top 5 stocks to avoid spamming
-    top_stocks = df.sort_values(by='per_chg', ascending=False).head(15)
+    top_stocks = df.sort_values(by='per_chg', ascending=False).head(10)
     
     msg = "**🔔 Market Open Alerts**\n"
     for _, row in top_stocks.iterrows():
