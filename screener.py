@@ -32,7 +32,7 @@ def send_alert(df):
     msg = "**🔔 Market Open Alerts**\n"
     for _, row in top_stocks.iterrows():
         link = f"https://in.tradingview.com/chart/?symbol=NSE:{row['nsecode']}"
-        msg += f"**{row['nsecode']}** (+{row['per_chg']}%) -> [Chart]({link})\n"
+        msg += f"**{row['nsecode']}** (+{row['per_chg']}%) -> [Chart](<{link}>)\n"
         
     requests.post(WEBHOOK_URL, json={"content": msg})
 
