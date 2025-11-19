@@ -65,7 +65,7 @@ def send_discord_embed(df):
         
         fields.append({
             "name": f"{symbol} (+{change}%)", 
-            "value": f"[View Chart]({link})\n{details}",
+            "value": f"[View Chart]({link})\n",
             # "inline": True  # This makes them stack side-by-side (2 per row usually)
         })
 
