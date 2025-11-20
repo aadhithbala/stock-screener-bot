@@ -61,11 +61,15 @@ def send_discord_embed(df):
         
         # Direct link to TradingView
         link = f"https://in.tradingview.com/chart/?symbol=NSE:{symbol}"
-    
         
+        
+        
+        # Field Value (The details)
+        # We use specific formatting to make it look clean
+   
         fields.append({
             "name": f"{symbol} (+{change}%)", 
-            "value": f"[View Chart]({link})\n",
+            "value": f"[View Chart]({link})",
             # "inline": True  # This makes them stack side-by-side (2 per row usually)
         })
 
